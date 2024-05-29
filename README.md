@@ -38,11 +38,11 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 ## Technology Used
 
-Nextjs
-React
-Tailwindcss
-redux Ui
-postgresql
-Supabase (database)
-Payment Gateway (Stripe)
-Email Services (EmailJS)
+- Nextjs
+- React
+- Tailwindcss
+- redux Ui
+- postgresql
+- Supabase (database)
+- Payment Gateway (Stripe)
+- Email Services (EmailJS)
