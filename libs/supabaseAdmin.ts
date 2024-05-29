@@ -22,8 +22,12 @@ const upsertProductRecord = async (product: Stripe.Product) => {
     metadata: product.metadata
   };
 
-  const { error } = await supabaseAdmin.from('products').upsert([productData]);
-  if (error) throw error;
+  const { error } = await supabaseAdmin
+    .from('products')
+    .upsert([productData]);
+  if (error) {
+    throw error;
+  } 
   console.log(`Product inserted/updated: ${product.id}`);
 };
 
@@ -42,8 +46,12 @@ const upsertPriceRecord = async (price: Stripe.Price) => {
     metadata: price.metadata
   };
 
-  const { error } = await supabaseAdmin.from('prices').upsert([priceData]);
-  if (error) throw error;
+  const { error } = await supabaseAdmin
+    .from('prices')
+    .upsert([priceData]);
+  if (error) {
+    throw error;
+  }
   console.log(`Price inserted/updated: ${price.id}`);
 };
 
@@ -175,5 +183,5 @@ export {
   upsertProductRecord,
   upsertPriceRecord,
   createOrRetrieveCustomer,
-  manageSubscriptionStatusChange,
+  manageSubscriptionStatusChange
 };
