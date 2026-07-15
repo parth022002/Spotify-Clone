@@ -1,23 +1,26 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { db } from "@/libs/db";
 import { Song } from "@/types";
+import { verifySession } from "@/libs/session";
 
 const getSongsByUserId = async (): Promise<Song[]> => {
-  const supabase = createServerComponentClient({
-    cookies: cookies
-  });
+  const cookieStore = cookies();
+  const token = cookieStore.get("spotify_session")?.value;
 
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (!token) {
+    return [];
+  }
 
-  if (sessionError || !sessionData.session?.user.id) {
+  const userId = verifySession(token);
+
+  if (!userId) {
     return [];
   }
 
   try {
     const songs = await db.song.findMany({
       where: {
-        user_id: sessionData.session.user.id,
+        user_id: userId,
       },
       orderBy: {
         created_at: 'desc',

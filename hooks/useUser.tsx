@@ -1,11 +1,14 @@
-import { useEffect, useState, createContext, useContext } from 'react';
-import {
-  useUser as useSupaUser,
-  useSessionContext,
-  User
-} from '@supabase/auth-helpers-react';
-
+import { useEffect, useState, createContext, useContext, useCallback } from 'react';
 import { UserDetails, Subscription } from '@/types';
+import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+
+export interface User {
+  id: string;
+  email: string;
+  full_name?: string;
+  avatar_url?: string;
+}
 
 type UserContextType = {
   accessToken: string | null;
@@ -13,6 +16,9 @@ type UserContextType = {
   userDetails: UserDetails | null;
   isLoading: boolean;
   subscription: Subscription | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  registerUser: (email: string, password: string, fullName: string) => Promise<boolean>;
+  logout: () => Promise<void>;
 };
 
 export const UserContext = createContext<UserContextType | undefined>(
@@ -24,72 +30,141 @@ export interface Props {
 }
 
 export const MyUserContextProvider = (props: Props) => {
-  const {
-    session,
-    isLoading: isLoadingUser,
-  } = useSessionContext();
-  const user = useSupaUser();
-  const accessToken = session?.access_token ?? null;
-  const [isLoadingData, setIsloadingData] = useState(false);
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getUserDetails = () =>
-    fetch(`/api/user/details?id=${user?.id}`)
-      .then((res) => (res.ok ? res.json() : null));
+  const fetchSession = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/session");
+      if (response.ok) {
+        const userData = await response.json();
+        if (userData) {
+          setUser(userData);
+          // Fetch additional details from Neon
+          const [detailsRes, subRes] = await Promise.all([
+            fetch(`/api/user/details?id=${userData.id}`),
+            fetch(`/api/user/subscription?id=${userData.id}`)
+          ]);
 
-  const getSubscription = () =>
-    fetch(`/api/user/subscription?id=${user?.id}`)
-      .then((res) => (res.ok ? res.json() : null));
+          if (detailsRes.ok) {
+            const details = await detailsRes.json();
+            setUserDetails(details);
+          }
+          if (subRes.ok) {
+            const sub = await subRes.json();
+            setSubscription(sub);
+          }
+        } else {
+          setUser(null);
+          setUserDetails(null);
+          setSubscription(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching session:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (user && !isLoadingData && !userDetails && !subscription) {
-      setIsloadingData(true);
+    fetchSession();
+  }, [fetchSession]);
 
-      // Sync user profile with Neon database
-      fetch("/api/user/sync", {
+  const login = async (email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: user.id,
-          full_name: user.user_metadata?.full_name || user.email || "",
-          avatar_url: user.user_metadata?.avatar_url || null,
-        }),
-      })
-        .then(() => {
-          Promise.allSettled([getUserDetails(), getSubscription()]).then(
-            (results) => {
-              const userDetailsPromise = results[0];
-              const subscriptionPromise = results[1];
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-              if (userDetailsPromise.status === 'fulfilled')
-                setUserDetails(userDetailsPromise.value as UserDetails);
-
-              if (subscriptionPromise.status === 'fulfilled')
-                setSubscription(subscriptionPromise.value as Subscription);
-
-              setIsloadingData(false);
-            }
-          );
-        })
-        .catch((err) => {
-          console.error("Error syncing user:", err);
-          setIsloadingData(false);
-        });
-    } else if (!user && !isLoadingUser && !isLoadingData) {
-      setUserDetails(null);
-      setSubscription(null);
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+        toast.success("Successfully logged in!");
+        await fetchSession();
+        router.refresh();
+        return true;
+      } else {
+        const errText = await response.text();
+        toast.error(errText || "Invalid credentials");
+        return false;
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-  }, [user, isLoadingUser]);
+  };
+
+  const registerUser = async (email: string, password: string, fullName: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, fullName }),
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+        toast.success("Account created successfully!");
+        await fetchSession();
+        router.refresh();
+        return true;
+      } else {
+        const errText = await response.text();
+        toast.error(errText || "Registration failed");
+        return false;
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        setUser(null);
+        setUserDetails(null);
+        setSubscription(null);
+        toast.success("Logged out successfully");
+        router.refresh();
+        router.push("/");
+      } else {
+        toast.error("Failed to log out");
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const value = {
-    accessToken,
+    accessToken: user ? user.id : null,
     user,
     userDetails,
-    isLoading: isLoadingUser || isLoadingData,
-    subscription
+    isLoading,
+    subscription,
+    login,
+    registerUser,
+    logout,
   };
 
   return <UserContext.Provider value={value} {...props} />;

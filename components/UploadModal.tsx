@@ -1,8 +1,6 @@
 "use client";
 
-import uniqid from "uniqid";
 import React, { useState } from 'react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { FieldValues, SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -18,7 +16,6 @@ const UploadModal = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const uploadModal = useUploadModal();
-  const supabaseClient = useSupabaseClient();
   const { user } = useUser();
   const router = useRouter();
 
@@ -54,42 +51,22 @@ const UploadModal = () => {
         return;
       }
 
-      const uniqueID = uniqid();
+      // Upload song and image files locally
+      const uploadFormData = new FormData();
+      uploadFormData.append("song", songFile);
+      uploadFormData.append("image", imageFile);
 
-      // Upload song
-      const {
-        data: songData,
-        error: songError
-      } = await supabaseClient
-        .storage
-        .from('songs')
-        .upload(`song-${values.title}-${uniqueID}`, songFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
+      const uploadResponse = await fetch("/api/songs/upload", {
+        method: "POST",
+        body: uploadFormData,
+      });
 
-      if (songError) {
+      if (!uploadResponse.ok) {
         setIsLoading(false);
-        return toast.error('Failed song upload');
+        return toast.error('Failed file uploads');
       }
 
-      // Upload image
-      const {
-        data: imageData,
-        error: imageError
-      } = await supabaseClient
-        .storage
-        .from('images')
-        .upload(`image-${values.title}-${uniqueID}`, imageFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (imageError) {
-        setIsLoading(false);
-        return toast.error('Failed image upload');
-      }
-
+      const uploadData = await uploadResponse.json();
 
       // Create record in Neon Database
       const createResponse = await fetch("/api/songs/create", {
@@ -101,8 +78,8 @@ const UploadModal = () => {
           user_id: user.id,
           title: values.title,
           author: values.author,
-          image_path: imageData.path,
-          song_path: songData.path
+          image_path: uploadData.image_path,
+          song_path: uploadData.song_path
         })
       });
 

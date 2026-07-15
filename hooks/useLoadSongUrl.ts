@@ -1,20 +1,15 @@
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-
 import { Song } from "@/types";
 
 const useLoadSongUrl = (song: Song) => {
-  const supabaseClient = useSupabaseClient();
-
-  if (!song) {
-    return '';
+  if (!song || !song.song_path) {
+    return "";
   }
 
-  const { data: songData } = supabaseClient
-  .storage
-  .from('songs')
-  .getPublicUrl(song.song_path);
+  if (song.song_path.startsWith("/") || song.song_path.startsWith("http")) {
+    return song.song_path;
+  }
 
-  return songData.publicUrl;
+  return `/uploads/songs/${song.song_path}`;
 };
 
 export default useLoadSongUrl;

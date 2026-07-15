@@ -1,11 +1,12 @@
-export const dynamic = "force-dynamic";
-
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from "next/headers";
 import { NextResponse } from 'next/server';
 import { stripe } from '@/libs/stripe';
 import { getURL } from '@/libs/helpers';
 import { createOrRetrieveCustomer } from '@/libs/supabaseAdmin';
+import { verifySession } from '@/libs/session';
+import { db } from "@/libs/db";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(
   request: Request
@@ -13,20 +14,37 @@ export async function POST(
   const { price, quantity = 1, metadata = {} } = await request.json();
 
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
+    const cookieStore = cookies();
+    const token = cookieStore.get("spotify_session")?.value;
+
+    if (!token) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const userId = verifySession(token);
+
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // Fetch user details from Neon DB to get their email
+    const user = await db.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
 
     const customer = await createOrRetrieveCustomer({
-      uuid: user?.id || '',
-      email: user?.email || ''
+      uuid: user.id,
+      email: user.email || ''
     });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       billing_address_collection: 'required',
-      customer: customer, // Use the customer directly if it's already a string
+      customer: customer,
       line_items: [
         {
           price: price.id,
@@ -44,7 +62,7 @@ export async function POST(
 
     return NextResponse.json({ sessionId: session.id });
   } catch (err: any) {
-    console.log(err);
+    console.error(err);
     return new NextResponse('Internal Error', { status: 500 });
   }
 }

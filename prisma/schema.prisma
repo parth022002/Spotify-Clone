@@ -5,10 +5,13 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../libs/generated-client"
 }
 
 model User {
   id             String         @id
+  email          String?        @unique
+  password       String?
   full_name      String?
   avatar_url     String?
   billing_address Json?

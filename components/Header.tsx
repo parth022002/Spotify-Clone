@@ -4,7 +4,6 @@ import { twMerge } from "tailwind-merge";
 import { RxCaretLeft, RxCaretRight } from "react-icons/rx";
 import { useRouter } from "next/navigation";
 import { FaUserAlt } from "react-icons/fa";
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { toast } from "react-hot-toast";
 import { HiHome } from "react-icons/hi";
 import { BiSearch } from "react-icons/bi";
@@ -28,17 +27,11 @@ const Header: React.FC<HeaderProps> = ({
   const router = useRouter();
   const authModal = useAuthModal();
 
-  const supabaseClient = useSupabaseClient();
-  const { user } = useUser();
+  const { user, logout } = useUser();
 
   const handleLogout = async () => {
-    const { error } = await supabaseClient.auth.signOut();
+    await logout();
     player.reset();
-    router.refresh();
-
-    if (error) {
-      toast.error(error.message);
-    }
   }
 
   return (
