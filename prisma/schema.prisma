@@ -1,0 +1,107 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String         @id
+  full_name      String?
+  avatar_url     String?
+  billing_address Json?
+  payment_method Json?
+  songs          Song[]
+  liked_songs    LikedSong[]
+  customers      Customer?
+  subscriptions  Subscription[]
+
+  @@map("users")
+}
+
+model Customer {
+  id                 String  @id
+  stripe_customer_id String? @unique
+  user               User    @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@map("customers")
+}
+
+model Product {
+  id          String   @id
+  active      Boolean?
+  name        String?
+  description String?
+  image       String?
+  metadata    Json?
+  prices      Price[]
+
+  @@map("products")
+}
+
+model Price {
+  id                String         @id
+  product_id        String?
+  active            Boolean?
+  currency          String?
+  description       String?
+  unit_amount       Int?
+  type              String?
+  interval          String?
+  interval_count    Int?
+  trial_period_days Int?
+  metadata          Json?
+  product           Product?       @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  subscriptions     Subscription[]
+
+  @@map("prices")
+}
+
+model Subscription {
+  id                   String    @id
+  user_id              String
+  status               String?
+  metadata             Json?
+  price_id             String?
+  quantity             Int?
+  cancel_at_period_end Boolean?
+  created              DateTime  @default(now())
+  current_period_start DateTime  @default(now())
+  current_period_end   DateTime  @default(now())
+  ended_at             DateTime?
+  cancel_at            DateTime?
+  canceled_at          DateTime?
+  trial_start          DateTime?
+  trial_end            DateTime?
+  user                 User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  price                Price?    @relation(fields: [price_id], references: [id], onDelete: SetNull)
+
+  @@map("subscriptions")
+}
+
+model Song {
+  id          Int         @id @default(autoincrement())
+  user_id     String
+  author      String?
+  title       String?
+  song_path   String?
+  image_path  String?
+  created_at  DateTime    @default(now())
+  user        User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  liked_songs LikedSong[]
+
+  @@map("songs")
+}
+
+model LikedSong {
+  song_id    Int
+  user_id    String
+  created_at DateTime @default(now())
+  song       Song     @relation(fields: [song_id], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([song_id, user_id])
+  @@map("liked_songs")
+}
