@@ -224,6 +224,14 @@ const PlayerContent: React.FC<PlayerContentProps> = ({
 
   return ( 
     <div className="grid grid-cols-2 md:grid-cols-3 h-full items-center relative">
+      {/* Mobile Top Edge Progress Bar */}
+      <div className="absolute -top-[8px] left-0 right-0 h-[2px] bg-neutral-800/40 pointer-events-none md:hidden overflow-hidden">
+        <div 
+          className="h-full bg-green-500 transition-all duration-300 shadow-[0_0_8px_#22c55e]" 
+          style={{ width: `${(seek / (duration || 1)) * 100}%` }} 
+        />
+      </div>
+
       {/* Song Details */}
       <div className="flex w-full justify-start">
         <div className="flex items-center gap-x-4">
