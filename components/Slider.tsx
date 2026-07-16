@@ -5,11 +5,17 @@ import * as RadixSlider from '@radix-ui/react-slider';
 interface SlideProps {
   value?: number;
   onChange?: (value: number) => void;
+  max?: number;
+  step?: number;
+  ariaLabel?: string;
 }
 
 const Slider: React.FC<SlideProps> = ({
   value = 1,
-  onChange
+  onChange,
+  max = 1,
+  step = 0.1,
+  ariaLabel = "Volume"
 }) => {
   const handleChange = (newValue: number[]) => {
     onChange?.(newValue[0]);
@@ -26,12 +32,12 @@ const Slider: React.FC<SlideProps> = ({
         w-full 
         h-10
       "
-      defaultValue={[1]}
+      defaultValue={[value]}
       value={[value]}
       onValueChange={handleChange}
-      max={1}
-      step={0.1}
-      aria-label="Volume"
+      max={max}
+      step={step}
+      aria-label={ariaLabel}
     >
       <RadixSlider.Track
         className="

@@ -29,6 +29,22 @@ const PlayerContent: React.FC<PlayerContentProps> = ({
   const [volume, setVolume] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showEQ, setShowEQ] = useState(false);
+  const [seek, setSeek] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const formatTime = (timeInSeconds: number) => {
+    if (isNaN(timeInSeconds)) return "0:00";
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = Math.floor(timeInSeconds % 60);
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  };
+
+  const handleSeekChange = (value: number) => {
+    if (sound) {
+      sound.seek(value);
+      setSeek(value);
+    }
+  };
 
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [filters, setFilters] = useState<BiquadFilterNode[]>([]);
@@ -95,6 +111,37 @@ const PlayerContent: React.FC<PlayerContentProps> = ({
       sound?.unload();
     }
   }, [sound]);
+
+  // Update duration when sound loads
+  useEffect(() => {
+    if (sound) {
+      setDuration(sound.duration());
+    }
+  }, [sound]);
+
+  // Request animation frame loop to update current seek position
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const updateSeek = () => {
+      if (sound && isPlaying) {
+        const currentSeek = sound.seek();
+        setSeek(typeof currentSeek === "number" ? currentSeek : 0);
+        if (duration === 0) {
+          setDuration(sound.duration());
+        }
+      }
+      animationFrameId = requestAnimationFrame(updateSeek);
+    };
+
+    if (isPlaying) {
+      animationFrameId = requestAnimationFrame(updateSeek);
+    }
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [sound, isPlaying, duration]);
 
   // Hook equalizer filters and analyser into Howler pipeline
   useEffect(() => {
@@ -229,49 +276,70 @@ const PlayerContent: React.FC<PlayerContentProps> = ({
           hidden
           h-full
           md:flex 
+          flex-col
           justify-center 
           items-center 
           w-full 
           max-w-[722px] 
-          gap-x-6
+          gap-y-1.5
         "
       >
-        <AiFillStepBackward
-          onClick={onPlayPrevious}
-          size={30} 
-          className="
-            text-neutral-400 
-            cursor-pointer 
-            hover:text-white 
-            transition
-          "
-        />
-        <div 
-          onClick={handlePlay} 
-          className="
-            flex 
-            items-center 
-            justify-center
-            h-10
-            w-10 
-            rounded-full 
-            bg-white 
-            p-1 
-            cursor-pointer
-          "
-        >
-          <Icon size={30} className="text-black" />
+        {/* Buttons Row */}
+        <div className="flex items-center gap-x-6 mt-1">
+          <AiFillStepBackward
+            onClick={onPlayPrevious}
+            size={24} 
+            className="
+              text-neutral-400 
+              cursor-pointer 
+              hover:text-white 
+              transition
+            "
+          />
+          <div 
+            onClick={handlePlay} 
+            className="
+              flex 
+              items-center 
+              justify-center
+              h-8
+              w-8 
+              rounded-full 
+              bg-white 
+              p-1 
+              cursor-pointer
+              hover:scale-105
+              transition
+            "
+          >
+            <Icon size={22} className="text-black" />
+          </div>
+          <AiFillStepForward
+            onClick={onPlayNext}
+            size={24} 
+            className="
+              text-neutral-400 
+              cursor-pointer 
+              hover:text-white 
+              transition
+            " 
+          />
         </div>
-        <AiFillStepForward
-          onClick={onPlayNext}
-          size={30} 
-          className="
-            text-neutral-400 
-            cursor-pointer 
-            hover:text-white 
-            transition
-          " 
-        />
+
+        {/* Progress Timeline Row */}
+        <div className="flex items-center gap-x-3 w-full text-xs text-neutral-400 select-none">
+          <span className="w-10 text-right font-mono text-[10px] text-neutral-400">{formatTime(seek)}</span>
+          <Slider
+            value={seek}
+            onChange={handleSeekChange}
+            max={duration || 1}
+            step={0.1}
+            ariaLabel="Progress"
+          />
+          <span className="w-10 text-left font-mono text-[10px] text-neutral-400">
+            {duration ? `-${formatTime(duration - seek)}` : "0:00"}
+          </span>
+        </div>
       </div>
 
       {/* Volume and Equalizer panels */}

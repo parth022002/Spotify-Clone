@@ -36,13 +36,32 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyser, isPlaying }) => {
       const height = canvas.height / window.devicePixelRatio;
 
       // Clear canvas with a transparent overlay for trail effect
-      ctx.fillStyle = "rgba(10, 10, 10, 0.2)";
+      ctx.fillStyle = "rgba(10, 10, 10, 0.25)";
       ctx.fillRect(0, 0, width, height);
 
       if (analyser && isPlaying) {
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
         analyser.getByteFrequencyData(dataArray);
+
+        // 1. Calculate average frequency magnitude for beat pulse
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const avg = sum / bufferLength;
+        const pulseRadius = (avg / 255) * height * 0.9;
+
+        // 2. Draw beat-synced radial ambient glow behind the bars
+        const gradGlow = ctx.createRadialGradient(
+          width / 2, height / 2, 5,
+          width / 2, height / 2, Math.max(10, height / 2 + pulseRadius)
+        );
+        gradGlow.addColorStop(0, "rgba(34, 197, 94, 0.2)");   // Green
+        gradGlow.addColorStop(0.5, "rgba(168, 85, 247, 0.1)"); // Purple
+        gradGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = gradGlow;
+        ctx.fillRect(0, 0, width, height);
 
         // Draw nice neon frequency bars
         const barWidth = (width / bufferLength) * 2.5;
