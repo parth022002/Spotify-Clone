@@ -8,6 +8,14 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'is*-ssl.mzstatic.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.mzstatic.com',
+      },
+      {
+        protocol: 'https',
         hostname: '**.supabase.co',
       }
     ],
