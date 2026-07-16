@@ -9,3 +9,17 @@ body,
   background-color: black;
   color-scheme: dark;
 }
+
+@keyframes bounceBar {
+  0%, 100% {
+    transform: scaleY(0.2);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-equalizer-bar {
+  animation: bounceBar 1s ease-in-out infinite;
+  transform-origin: bottom;
+}

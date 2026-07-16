@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { twMerge } from "tailwind-merge";
 
 import useLoadImage from "@/hooks/useLoadImage";
 import { Song } from "@/types";
@@ -9,11 +10,13 @@ import usePlayer from "@/hooks/usePlayer";
 interface MediaItemProps {
   data: Song;
   onClick?: (id: string) => void;
+  isSpinning?: boolean;
 }
 
 const MediaItem: React.FC<MediaItemProps> = ({
   data,
   onClick,
+  isSpinning,
 }) => {
   const player = usePlayer();
   const imageUrl = useLoadImage(data);
@@ -41,13 +44,10 @@ const MediaItem: React.FC<MediaItemProps> = ({
       "
     >
       <div
-        className="
-          relative 
-          rounded-md 
-          min-h-[48px] 
-          min-w-[48px] 
-          overflow-hidden
-        "
+        className={twMerge(
+          "relative rounded-md min-h-[48px] min-w-[48px] overflow-hidden transition-all duration-500",
+          isSpinning && "rounded-full animate-[spin_10s_linear_infinite]"
+        )}
       >
         <Image
           fill
