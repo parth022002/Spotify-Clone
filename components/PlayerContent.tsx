@@ -82,6 +82,13 @@ const PlayerContent: React.FC<PlayerContentProps> = ({
   );
 
   useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).Howler) {
+      const Howler = (window as any).Howler;
+      if (Howler.ctx && Howler.ctx.state === "suspended") {
+        Howler.ctx.resume();
+      }
+    }
+
     sound?.play();
     
     return () => {

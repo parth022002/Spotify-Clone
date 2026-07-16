@@ -54,7 +54,7 @@ const SONGS = [
     title: "Starlight Voyage",
     author: "Avicii",
     song_path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
-    image_path: "https://images.unsplash.com/photo-1487180142328-0c4e37023af5?q=80&w=300&h=300&fit=crop",
+    image_path: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=300&h=300&fit=crop",
   },
   {
     title: "Solar Wind",
@@ -136,7 +136,14 @@ async function seed() {
         });
         console.log(`Successfully seeded song: "${newSong.title}" by ${newSong.author}`);
       } else {
-        console.log(`Song "${song.title}" already exists in database.`);
+        await db.song.update({
+          where: { id: existing.id },
+          data: {
+            song_path: song.song_path,
+            image_path: song.image_path,
+          }
+        });
+        console.log(`Song "${song.title}" already exists, updated paths.`);
       }
     }
 
