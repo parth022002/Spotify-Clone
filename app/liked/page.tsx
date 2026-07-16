@@ -13,12 +13,16 @@ const Liked = async () => {
   return (
     <div 
       className="
-        bg-neutral-900 
-        rounded-lg 
+        bg-neutral-950/65 
+        backdrop-blur-xl 
+        border 
+        border-neutral-800/40 
+        rounded-2xl 
         h-full 
         w-full 
         overflow-hidden 
         overflow-y-auto
+        shadow-2xl
       "
     >
       <Header>

@@ -69,7 +69,7 @@ const Sidebar = ({ children, songs }: SidebarProps) => {
           md:flex 
           flex-col 
           gap-y-2 
-          bg-black 
+          bg-transparent 
           h-full 
           w-[300px] 
           p-2

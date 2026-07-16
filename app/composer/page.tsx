@@ -220,8 +220,8 @@ const ComposerPage = () => {
   };
 
   return (
-    <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto">
-      <Header className="from-purple-900">
+    <div className="bg-neutral-950/65 backdrop-blur-xl border border-neutral-800/40 rounded-2xl h-full w-full overflow-hidden overflow-y-auto shadow-2xl">
+      <Header className="from-neutral-950/40">
         <div className="mb-2">
           <h1 className="text-white text-3xl font-bold">Music Composer</h1>
           <p className="text-neutral-400 text-sm mt-1">

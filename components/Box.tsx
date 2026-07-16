@@ -13,10 +13,14 @@ const Box: React.FC<BoxProps> = ({
     <div
       className={twMerge(
         `
-        bg-neutral-900 
-        rounded-lg 
+        bg-neutral-950/65 
+        backdrop-blur-xl 
+        border 
+        border-neutral-800/40 
+        rounded-2xl 
         h-fit 
         w-full
+        shadow-[0_4px_30px_rgba(0,0,0,0.4)]
         `,
         className
       )}>

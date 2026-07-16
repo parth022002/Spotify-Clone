@@ -22,12 +22,16 @@ const Player = () => {
         fixed 
         bottom-[65px]
         md:bottom-0
-        bg-black 
+        bg-neutral-950/80 
+        backdrop-blur-xl 
+        border-t 
+        border-white/5 
         w-full 
         py-2 
         h-[80px] 
         px-4
         z-40
+        shadow-[0_-5px_20px_rgba(0,0,0,0.5)]
       "
     >
       <PlayerContent key={songUrl} song={song} songUrl={songUrl} />

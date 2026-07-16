@@ -32,14 +32,19 @@ const Header: React.FC<HeaderProps> = ({
   const handleLogout = async () => {
     await logout();
     player.reset();
-  }
+  };
 
   return (
     <div
       className={twMerge(`
         h-fit 
         bg-gradient-to-b 
-        from-emerald-700 
+        from-green-950/30 
+        via-neutral-950/85 
+        to-neutral-950
+        backdrop-blur-md
+        border-b
+        border-white/5
         p-6
         `,
         className
